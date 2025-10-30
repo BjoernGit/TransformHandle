@@ -118,11 +118,12 @@ namespace MeshFreeHandles
         {
             Color color = new Color(centerColor.r, centerColor.g, centerColor.b, 
                                    isHovered ? selectedAlpha : axisAlpha);
-            
+
             // Collect a special center box that's always camera-facing
-            Camera cam = Camera.main;
+            Camera cam = batcher?.GetCamera();
+            if (cam == null) return; //no cam protection
             Vector3 forward = (cam.transform.position - center).normalized;
-            
+
             batcher.AddBox(center, forward, size, color);
             
             // Collect connecting lines to make it clear it's the center

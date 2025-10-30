@@ -37,7 +37,13 @@ namespace MeshFreeHandles
         {
             this.renderCamera = camera;
         }
-        
+
+        // GetCamera method
+        public Camera GetCamera()
+        {
+            return renderCamera;
+        }
+
         // Check if camera is valid
         public bool HasValidCamera()
         {

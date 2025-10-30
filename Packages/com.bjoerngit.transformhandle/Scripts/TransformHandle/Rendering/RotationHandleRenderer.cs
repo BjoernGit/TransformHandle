@@ -40,7 +40,8 @@ namespace MeshFreeHandles
                 batcher.Clear();
             
             Vector3 position = target.position;
-            Camera camera = Camera.main;
+            Camera camera = batcher?.GetCamera();
+            if (camera == null) return; // no cam protection
 
             Vector3 dirX = (handleSpace == HandleSpace.Local) ? target.right   : Vector3.right;
             Vector3 dirY = (handleSpace == HandleSpace.Local) ? target.up      : Vector3.up;
@@ -66,7 +67,8 @@ namespace MeshFreeHandles
                 batcher.Clear();
             
             Vector3 position = target.position;
-            Camera camera = Camera.main;
+            Camera camera = batcher?.GetCamera();
+            if (camera == null) return; //no cam protection
 
             // Collect circles based on profile
             for (int axis = 0; axis < 3; axis++)
@@ -98,6 +100,8 @@ namespace MeshFreeHandles
         private void CollectRotationCircle(Vector3 center, Vector3 normal, Color color, float radius,
                                          int axisIndex, int hoveredAxis, Camera camera)
         {
+            if (camera == null) return; //no cam protection
+
             float alpha = (hoveredAxis == axisIndex) ? selectedAlpha : axisAlpha;
             Color baseColor = new Color(color.r, color.g, color.b, alpha);
 
