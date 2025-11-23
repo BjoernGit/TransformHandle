@@ -4,7 +4,7 @@ namespace MeshFreeHandles
 {
     /// <summary>
     /// Manages user input and coordinates interaction components,
-    /// now supporting Local/Global handle space and mixed-space profiles.
+    /// supporting Local/Global handle space and mixed-space profiles.
     /// </summary>
     public class HandleInteraction
     {
@@ -20,8 +20,8 @@ namespace MeshFreeHandles
 
         // Interaction state
         public int HoveredAxis { get; private set; } = -1;
-        public bool IsDragging   { get; private set; }
-        public int DraggedAxis   { get; private set; } = -1;
+        public bool IsDragging { get; private set; }
+        public int DraggedAxis { get; private set; } = -1;
 
         // Profile state
         private HandleProfile currentProfile;
@@ -30,16 +30,16 @@ namespace MeshFreeHandles
         public HandleInteraction(Camera camera)
         {
             mainCamera = camera;
-            hoverDetector      = new HandleHoverDetector(camera);
+            hoverDetector = new HandleHoverDetector(camera);
             translationHandler = new TranslationDragHandler(camera);
-            rotationHandler    = new RotationDragHandler(camera);
-            scaleHandler       = new ScaleDragHandler(camera);
+            rotationHandler = new RotationDragHandler(camera);
+            scaleHandler = new ScaleDragHandler(camera);
         }
 
         public void SetCamera(Camera camera)
         {
             mainCamera = camera;
-            
+
             // Update all sub-components with new camera
             if (hoverDetector != null)
                 hoverDetector = new HandleHoverDetector(camera);
@@ -63,9 +63,9 @@ namespace MeshFreeHandles
         {
             if (target == null || mainCamera == null) return;
 
-            Vector2 mousePos     = Input.mousePosition;
-            bool    mousePressed = Input.GetMouseButtonDown(0);
-            bool    mouseReleased= Input.GetMouseButtonUp(0);
+            Vector2 mousePos = Input.mousePosition;
+            bool mousePressed = Input.GetMouseButtonDown(0);
+            bool mouseReleased = Input.GetMouseButtonUp(0);
 
             if (!IsDragging)
             {
@@ -96,9 +96,9 @@ namespace MeshFreeHandles
 
             currentProfile = profile;
 
-            Vector2 mousePos     = Input.mousePosition;
-            bool    mousePressed = Input.GetMouseButtonDown(0);
-            bool    mouseReleased= Input.GetMouseButtonUp(0);
+            Vector2 mousePos = Input.mousePosition;
+            bool mousePressed = Input.GetMouseButtonDown(0);
+            bool mouseReleased = Input.GetMouseButtonUp(0);
 
             if (!IsDragging)
             {
@@ -126,7 +126,7 @@ namespace MeshFreeHandles
 
         private void StartDrag(HandleType handleType, HandleSpace handleSpace, Vector2 mousePos)
         {
-            IsDragging  = true;
+            IsDragging = true;
             DraggedAxis = HoveredAxis;
             draggedAxisSpace = handleSpace;
 
@@ -152,7 +152,7 @@ namespace MeshFreeHandles
 
         private void StartDragWithSpace(HandleType handleType, HandleSpace axisSpace, Vector2 mousePos)
         {
-            IsDragging  = true;
+            IsDragging = true;
             DraggedAxis = HoveredAxis;
             draggedAxisSpace = axisSpace;
 
@@ -180,7 +180,7 @@ namespace MeshFreeHandles
         {
             currentDragHandler?.EndDrag();
             currentDragHandler = null;
-            IsDragging  = false;
+            IsDragging = false;
             DraggedAxis = -1;
         }
 
@@ -193,24 +193,34 @@ namespace MeshFreeHandles
             bool hasLocal = profile.IsAxisEnabled(handleType, axis, HandleSpace.Local);
             // Check if this axis is enabled in global space  
             bool hasGlobal = profile.IsAxisEnabled(handleType, axis, HandleSpace.Global);
-            
-            // If both are enabled, we need a priority system
-            // For planes (axis 4-6), we might want different logic
+
+            // Handle Rotation modes (Axis 3: Roll, Axis 7: Trackball)
+            if (handleType == HandleType.Rotation && (axis == 3 || axis == 7))
+            {
+                // These are camera-space operations, but must return an enabled space.
+                if (hasGlobal)
+                    return HandleSpace.Global;
+                if (hasLocal)
+                    return HandleSpace.Local;
+
+                return HandleSpace.Global;
+            }
+
+            // If both are enabled, we need a priority system.
+            // For planes (axis 4-6), we prefer the space that has components enabled.
             if (axis >= 4 && axis <= 6)
             {
-                // For planes, prefer the space that has both component axes enabled
-                // This is a simplified approach - you might want more sophisticated logic
                 if (hasLocal) return HandleSpace.Local;
                 if (hasGlobal) return HandleSpace.Global;
             }
-            else
+            else // Regular axes (0, 1, 2)
             {
-                // For regular axes, prefer local space if both are enabled
+                // For regular axes, prefer local space if both are enabled.
                 if (hasLocal) return HandleSpace.Local;
                 if (hasGlobal) return HandleSpace.Global;
             }
-            
-            return HandleSpace.Local; // Fallback
+
+            return HandleSpace.Local; // Final Fallback
         }
     }
 }

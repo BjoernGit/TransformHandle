@@ -4,7 +4,7 @@ namespace MeshFreeHandles
 {
     /// <summary>
     /// Handles the dragging logic for rotation operations,
-    /// respecting Local/Global handle space and supporting free rotation.
+    /// supporting various rotation modes and handle spaces.
     /// </summary>
     public class RotationDragHandler : IDragHandler
     {
@@ -20,11 +20,12 @@ namespace MeshFreeHandles
         // Incremental rotation system
         private Quaternion incrementQ;
         private Vector3 startAxisWorld;
-        private float pixelsPerIncrement = 30f;  // 30px → one step
-        private const float incrementAngle = 15f; // 15° per step for smoother control
+        private float pixelsPerIncrement = 30f;  // 30px per step
+        private const float incrementAngle = 15f; // 15° per step
 
-        // Free rotation specific
-        private bool isFreeRotation;
+        // Rotation Mode States
+        private bool isFreeRotation; // Axis 3: Roll Rotation
+        private bool isTrackballRotation; // Axis 7: Trackball Rotation
         private Vector2 lastMousePos;
 
         public RotationDragHandler(Camera camera)
@@ -36,7 +37,10 @@ namespace MeshFreeHandles
         {
             this.target = target;
             this.draggedAxis = axis;
-            this.isFreeRotation = (axis == 3);
+
+            // Determine rotation mode
+            this.isFreeRotation = (axis == 3); // Axis 3 is the Roll Rotation ring
+            this.isTrackballRotation = (axis == 7); // Axis 7 is the Trackball area
 
             // Store start rotation and mouse position
             rotationStartOrientation = target.rotation;
@@ -48,14 +52,18 @@ namespace MeshFreeHandles
             Vector3 centerScreen3D = mainCamera.WorldToScreenPoint(centerWorld);
             centerScreen2D = new Vector2(centerScreen3D.x, centerScreen3D.y);
 
-            if (isFreeRotation)
+            if (isFreeRotation) // Axis 3: Roll Rotation
             {
-                // Free rotation uses camera-facing axis
+                // Roll rotation axis is the camera-to-target vector
                 startAxisWorld = (mainCamera.transform.position - target.position).normalized;
             }
-            else
+            else if (isTrackballRotation) // Axis 7: Trackball Rotation
             {
-                // Regular axis rotation
+                // Axis is dynamic and calculated per frame in UpdateDrag
+                startAxisWorld = Vector3.zero;
+            }
+            else // Regular axis rotation (0, 1, 2)
+            {
                 if (space == HandleSpace.Local)
                 {
                     switch (axis)
@@ -77,20 +85,29 @@ namespace MeshFreeHandles
                 }
             }
 
-            // Calculate ellipse tangent for ALL rotations (including free rotation)
-            CalculateEllipseTangent(mousePos, axis);
-            
-            // Prepare incremental quaternion around the axis
-            incrementQ = Quaternion.AngleAxis(incrementAngle, startAxisWorld);
+            // Calculate ellipse tangent is only needed for the incremental/axis-based rotation (0-3)
+            if (axis >= 0 && axis <= 3)
+            {
+                CalculateEllipseTangent(mousePos, axis);
+                // Prepare incremental quaternion around the axis
+                incrementQ = Quaternion.AngleAxis(incrementAngle, startAxisWorld);
+            }
         }
 
         public void UpdateDrag(Vector2 mousePos)
         {
             if (target == null || draggedAxis < 0) return;
 
-            // Use the same tangent-based rotation for all axes (including free rotation)
-            UpdateAxisRotation(mousePos);
-            
+            if (isTrackballRotation)
+            {
+                UpdateTrackballRotation(mousePos);
+            }
+            else
+            {
+                // Used for axes 0, 1, 2, and 3 (Roll Rotation)
+                UpdateAxisRotation(mousePos);
+            }
+
             lastMousePos = mousePos;
         }
 
@@ -100,7 +117,7 @@ namespace MeshFreeHandles
             Vector2 delta = mousePos - rotationStartMousePos;
             float proj = Vector2.Dot(delta, ellipseTangent);
 
-            // Calculate number of steps (can be negative)
+            // Calculate number of steps
             float steps = proj / pixelsPerIncrement;
 
             // Delta quaternion as "incrementQ ^ steps"
@@ -110,11 +127,42 @@ namespace MeshFreeHandles
             target.rotation = deltaQ * rotationStartOrientation;
         }
 
+        /// <summary>
+        /// Applies rotation based on mouse movement direction (Trackball style).
+        /// Rotation axis is perpendicular to the screen-space mouse delta.
+        /// </summary>
+        private void UpdateTrackballRotation(Vector2 mousePos)
+        {
+            Vector2 screenDelta = mousePos - lastMousePos;
+
+            if (screenDelta.sqrMagnitude < 0.1f) return;
+
+            // Rotation speed factor
+            float rotationSpeed = 0.5f;
+
+            // Calculate rotation angle proportional to mouse distance
+            float angle = screenDelta.magnitude * rotationSpeed;
+
+            // Get camera-relative world axes
+            Vector3 worldRight = mainCamera.transform.right;
+            Vector3 worldUp = mainCamera.transform.up;
+
+            // Calculate the world-space axis of rotation. 
+            // Axis is inverted for intuitive trackball rotation.
+            Vector3 rotationAxis = (worldRight * screenDelta.y) + (-worldUp * screenDelta.x);
+            rotationAxis.Normalize();
+
+            // Apply the rotation incrementally
+            Quaternion rotation = Quaternion.AngleAxis(angle, rotationAxis);
+            target.rotation = rotation * target.rotation;
+        }
+
         public void EndDrag()
         {
             target = null;
             draggedAxis = -1;
             isFreeRotation = false;
+            isTrackballRotation = false;
         }
 
         private void CalculateEllipseTangent(Vector2 clickPos, int axis)
@@ -133,8 +181,8 @@ namespace MeshFreeHandles
             float bestAngle = 0f;
             int samples = 36;
             float radius = GetHandleScale();
-            
-            // Use larger radius for free rotation
+
+            // Use larger radius for free rotation (Roll)
             if (axis == 3)
                 radius *= 1.2f;
 
@@ -143,9 +191,9 @@ namespace MeshFreeHandles
                 float ang = i * (360f / samples) * Mathf.Deg2Rad;
                 Vector3 ptWorld = target.position + (t1 * Mathf.Cos(ang) + t2 * Mathf.Sin(ang)) * radius;
                 Vector3 ptScreen = mainCamera.WorldToScreenPoint(ptWorld);
-                
+
                 if (ptScreen.z <= 0) continue;
-                
+
                 Vector2 screenDir = new Vector2(ptScreen.x - centerScreen2D.x, ptScreen.y - centerScreen2D.y).normalized;
                 float dot = Vector2.Dot(clickDir, screenDir);
                 if (dot > bestDot)
@@ -173,9 +221,9 @@ namespace MeshFreeHandles
             // Normalize to positive w
             if (q.w < 0f)
                 q = new Quaternion(-q.x, -q.y, -q.z, -q.w);
-            
+
             float alpha = Mathf.Acos(Mathf.Clamp(q.w, -1f, 1f));
-            
+
             // For very small angles, use linear approximation
             if (Mathf.Abs(alpha) < 0.0001f)
                 return new Quaternion(q.x * t, q.y * t, q.z * t, Mathf.Cos(alpha * t)).normalized;
