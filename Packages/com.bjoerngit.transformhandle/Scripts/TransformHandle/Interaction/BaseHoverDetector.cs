@@ -3,14 +3,16 @@ using UnityEngine;
 namespace MeshFreeHandles
 {
     /// <summary>
-    /// Base class for handle hover detection with common functionality
+    /// Base class for handle hover detection providing shared math utilities.
     /// </summary>
     public abstract class BaseHoverDetector
     {
         protected Camera mainCamera;
-        protected const float TRANSLATION_THRESHOLD = 10f;
-        protected const float ROTATION_THRESHOLD = 15f;
-        protected const float SCALE_THRESHOLD = 20f;
+
+        // Unified thresholds for consistent user experience
+        protected const float AXIS_THRESHOLD = 10;    // For Lines (Translation/Scale)
+        protected const float ROTATION_THRESHOLD = 15f; // For Circles
+        protected const float CENTER_THRESHOLD = 20f;   // For Center handles
 
         public BaseHoverDetector(Camera camera)
         {
@@ -19,6 +21,41 @@ namespace MeshFreeHandles
 
         public abstract int GetHoveredAxis(Vector2 mousePos, Transform target, float handleScale, HandleSpace handleSpace);
         public abstract int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile);
+
+        /// <summary>
+        /// Calculates the screen-space distance to a linear handle (shaft + end cap).
+        /// Used by both Translation and Scale handles.
+        /// </summary>
+        /// <param name="tipHitRadius">Radius in pixels for the end cap (cone/cube) to facilitate grabbing.</param>
+        protected float CalculateDistanceToLinearHandle(Vector2 mousePos, Vector3 origin, Vector3 direction, float scale, float tipHitRadius)
+        {
+            Vector3 endPoint = origin + direction * scale;
+
+            if (IsPointBehindCamera(origin) || IsPointBehindCamera(endPoint))
+                return float.MaxValue;
+
+            // Convert to screen space
+            Vector3 originScreen = mainCamera.WorldToScreenPoint(origin);
+            Vector3 endScreen = mainCamera.WorldToScreenPoint(endPoint);
+
+            Vector2 originScreen2D = new Vector2(originScreen.x, originScreen.y);
+            Vector2 endScreen2D = new Vector2(endScreen.x, endScreen.y);
+
+            // 1. Distance to shaft (Line)
+            float distToLine = DistancePointToLineSegment(mousePos, originScreen2D, endScreen2D);
+
+            // 2. Distance to tip (End Cap)
+            // Allow a circular area around the tip for easier selection
+            float distToTip = Vector2.Distance(mousePos, endScreen2D);
+
+            // If we are within the tip radius, return 0 (direct hit), otherwise use line distance
+            if (distToTip < tipHitRadius)
+            {
+                return 0f;
+            }
+
+            return Mathf.Min(distToLine, distToTip);
+        }
 
         protected Vector3 GetAxisDirection(Transform target, int axisIndex, HandleSpace space)
         {
