@@ -108,18 +108,36 @@ namespace MeshFreeHandles
         private float GetDistanceToAxis(Vector2 mousePos, Vector3 origin, Vector3 direction, float scale)
         {
             Vector3 endPoint = origin + direction * scale;
-            
+
             if (IsPointBehindCamera(origin) || IsPointBehindCamera(endPoint))
                 return float.MaxValue;
 
             Vector3 originScreen = mainCamera.WorldToScreenPoint(origin);
             Vector3 endScreen = mainCamera.WorldToScreenPoint(endPoint);
 
-            return DistancePointToLineSegment(
-                mousePos, 
-                new Vector2(originScreen.x, originScreen.y), 
-                new Vector2(endScreen.x, endScreen.y)
+            Vector2 originScreen2D = new Vector2(originScreen.x, originScreen.y);
+            Vector2 endScreen2D = new Vector2(endScreen.x, endScreen.y);
+
+            // 1. Calculate distance to the central line segment (shaft)
+            float distToLine = DistancePointToLineSegment(
+                mousePos,
+                originScreen2D,
+                endScreen2D
             );
+
+            // 2. Check proximity to the arrow tip (cone)
+            // The visual cone is wider than the line threshold, so we apply a larger hit radius at the tip.
+            float distToTip = Vector2.Distance(mousePos, endScreen2D);
+            const float CONE_HIT_RADIUS = 25f; // Visual radius approximation of the arrow head in pixels
+
+            if (distToTip < CONE_HIT_RADIUS)
+            {
+                // Return 0 to ensure detection if the mouse is within the visual cone radius,
+                // overriding the stricter line threshold.
+                return 0f;
+            }
+
+            return distToLine;
         }
 
         private float GetDistanceToPlane(Vector2 mousePos, Vector3 center, Vector3 axis1, Vector3 axis2, float size)

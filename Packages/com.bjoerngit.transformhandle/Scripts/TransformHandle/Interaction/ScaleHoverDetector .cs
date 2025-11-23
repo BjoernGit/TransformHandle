@@ -92,14 +92,28 @@ namespace MeshFreeHandles
 
         private float GetDistanceToScaleHandle(Vector2 mousePos, Vector3 origin, Vector3 direction, float scale)
         {
-            // Scale handle has a box at the end of the axis
+            // Calculate the world position of the scale box (end of handle)
             Vector3 boxCenter = origin + direction * scale;
-            
-            if (IsPointBehindCamera(boxCenter))
+
+            if (IsPointBehindCamera(origin) || IsPointBehindCamera(boxCenter))
                 return float.MaxValue;
-            
-            Vector3 screenPos = mainCamera.WorldToScreenPoint(boxCenter);
-            return Vector2.Distance(mousePos, new Vector2(screenPos.x, screenPos.y));
+
+            // Convert positions to screen space
+            Vector3 originScreen = mainCamera.WorldToScreenPoint(origin);
+            Vector3 boxScreen = mainCamera.WorldToScreenPoint(boxCenter);
+
+            Vector2 originScreen2D = new Vector2(originScreen.x, originScreen.y);
+            Vector2 boxScreen2D = new Vector2(boxScreen.x, boxScreen.y);
+
+            // 1. Check distance to the end box (visual cube)
+            float distToBox = Vector2.Distance(mousePos, boxScreen2D);
+
+            // 2. Check distance to the connecting shaft line
+            // This ensures the user can grab the handle by the line, not just the end box
+            float distToLine = DistancePointToLineSegment(mousePos, originScreen2D, boxScreen2D);
+
+            // Return the minimum distance to ensure the entire handle is interactive
+            return Mathf.Min(distToBox, distToLine);
         }
 
         private float GetDistanceToCenterHandle(Vector2 mousePos, Vector3 center, float size)
