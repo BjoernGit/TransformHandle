@@ -3,8 +3,8 @@ using UnityEngine;
 namespace MeshFreeHandles
 {
     /// <summary>
-    /// Interface for different drag handling strategies,
-    /// now supporting Local/Global handle space.
+    /// Interface for different drag handling strategies.
+    /// Some implementations use the handleSpace parameter to support Local/Global axes.
     /// </summary>
     public interface IDragHandler
     {

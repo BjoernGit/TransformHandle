@@ -10,7 +10,6 @@ namespace MeshFreeHandles
         private Camera mainCamera;
         private Transform target;
         private int draggedAxis;
-        private HandleSpace handleSpace; // Not used for scale, but required by interface
 
         private Vector3 scaleStartValue;
         private Vector2 dragStartMousePos;
@@ -24,11 +23,10 @@ namespace MeshFreeHandles
             mainCamera = camera;
         }
 
-        public void StartDrag(Transform target, int axis, Vector2 mousePos, HandleSpace space)
+        public void StartDrag(Transform target, int axis, Vector2 mousePos, HandleSpace _)
         {
             this.target = target;
             this.draggedAxis = axis;
-            this.handleSpace = space; // Ignored for scale
 
             scaleStartValue = target.localScale;
             dragStartMousePos = mousePos;
