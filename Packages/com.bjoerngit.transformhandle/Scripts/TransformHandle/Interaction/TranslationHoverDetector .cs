@@ -15,22 +15,7 @@ namespace MeshFreeHandles
             float minDist = float.MaxValue;
             int axis = -1;
 
-            // 1. Check regular axes (0-2) using unified linear logic
-            for (int i = 0; i < 3; i++)
-            {
-                Vector3 dir = TranslationHandleUtils.GetAxisDirection(target, i, handleSpace);
-
-                // Use a hit radius of 20f for the arrow tip to ensure good usability
-                float dist = CalculateDistanceToLinearHandle(mousePos, target.position, dir, handleScale, tipHitRadius: 20f);
-
-                if (dist < minDist && dist < AXIS_THRESHOLD)
-                {
-                    minDist = dist;
-                    axis = i;
-                }
-            }
-
-            // 2. Check plane handles (4-6)
+            // Planes first (indices 4–6)
             float planeScale = handleScale * TranslationHandleRenderer.PLANE_SIZE_MULTIPLIER;
             Vector3 camForward = mainCamera.transform.forward;
 
@@ -41,7 +26,6 @@ namespace MeshFreeHandles
 
                 float dist = GetDistanceToPlane(mousePos, target.position + offset, axis1, axis2, planeScale);
 
-                // We use AXIS_THRESHOLD here as well for consistency across the tool
                 if (dist < minDist && dist < AXIS_THRESHOLD)
                 {
                     minDist = dist;
@@ -49,18 +33,34 @@ namespace MeshFreeHandles
                 }
             }
 
+            // Linear axes (0–2)
+            for (int i = 0; i < 3; i++)
+            {
+                Vector3 dir = TranslationHandleUtils.GetAxisDirection(target, i, handleSpace);
+                float dist = CalculateDistanceToLinearHandle(mousePos, target.position, dir, handleScale, tipHitRadius: 20f);
+
+                if (dist < minDist && dist < AXIS_THRESHOLD)
+                {
+                    minDist = dist;
+                    axis = i;
+                }
+            }
+
             return axis;
         }
+
 
         public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile)
         {
             float minDist = float.MaxValue;
             int axis = -1;
 
-            // 1. Check regular axes (0-2)
+            // Planes first
+            CheckPlanesWithProfile(mousePos, target, handleScale, profile, ref minDist, ref axis);
+
+            // Linear axes (0–2)
             for (int i = 0; i < 3; i++)
             {
-                // Check both spaces (Local/Global) as defined in profile
                 foreach (HandleSpace space in System.Enum.GetValues(typeof(HandleSpace)))
                 {
                     if (profile.IsAxisEnabled(HandleType.Translation, i, space))
@@ -77,11 +77,10 @@ namespace MeshFreeHandles
                 }
             }
 
-            // 2. Check plane handles (4-6)
-            CheckPlanesWithProfile(mousePos, target, handleScale, profile, ref minDist, ref axis);
-
             return axis;
         }
+
+
 
         private void CheckPlanesWithProfile(Vector2 mousePos, Transform target, float handleScale,
                                            HandleProfile profile, ref float minDist, ref int axis)

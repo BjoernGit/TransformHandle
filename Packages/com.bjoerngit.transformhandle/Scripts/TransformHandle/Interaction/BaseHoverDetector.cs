@@ -34,28 +34,20 @@ namespace MeshFreeHandles
             if (IsPointBehindCamera(origin) || IsPointBehindCamera(endPoint))
                 return float.MaxValue;
 
-            // Convert to screen space
             Vector3 originScreen = mainCamera.WorldToScreenPoint(origin);
             Vector3 endScreen = mainCamera.WorldToScreenPoint(endPoint);
 
             Vector2 originScreen2D = new Vector2(originScreen.x, originScreen.y);
             Vector2 endScreen2D = new Vector2(endScreen.x, endScreen.y);
 
-            // 1. Distance to shaft (Line)
             float distToLine = DistancePointToLineSegment(mousePos, originScreen2D, endScreen2D);
-
-            // 2. Distance to tip (End Cap)
-            // Allow a circular area around the tip for easier selection
             float distToTip = Vector2.Distance(mousePos, endScreen2D);
 
-            // If we are within the tip radius, return 0 (direct hit), otherwise use line distance
-            if (distToTip < tipHitRadius)
-            {
-                return 0f;
-            }
-
+            // Tip is treated the same as the shaft
             return Mathf.Min(distToLine, distToTip);
         }
+
+
 
         protected Vector3 GetAxisDirection(Transform target, int axisIndex, HandleSpace space)
         {
