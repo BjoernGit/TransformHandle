@@ -12,7 +12,7 @@ namespace MeshFreeHandles
         // Unified thresholds for consistent user experience
         protected const float AXIS_THRESHOLD = 10;    // For Lines (Translation/Scale)
         protected const float ROTATION_THRESHOLD = 15f; // For Circles
-        protected const float CENTER_THRESHOLD = 20f;   // For Center handles
+        protected const float CENTER_THRESHOLD = 10f;   // For Center handles
 
         public BaseHoverDetector(Camera camera)
         {

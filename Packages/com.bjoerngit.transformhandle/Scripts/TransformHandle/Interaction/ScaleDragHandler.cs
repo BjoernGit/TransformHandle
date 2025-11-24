@@ -41,39 +41,54 @@ namespace MeshFreeHandles
         {
             if (target == null) return;
 
-            // Calculate mouse movement along the handle direction
+            // Mouse delta in screen space
             Vector2 mouseDelta = mousePos - dragStartMousePos;
-            
+
+            // Uniform scale (center handle, axis 3)
+            if (draggedAxis == 3)
+            {
+                // Use vertical mouse movement for scaling
+                float projectedDelta = mouseDelta.y;
+
+                // Convert to scale factor
+                float scaleFactor = 1f + (projectedDelta * scaleSpeed);
+
+                //prevent negative or zero scale
+                scaleFactor = Mathf.Max(scaleFactor, 0.01f);
+
+                target.localScale = scaleStartValue * scaleFactor;
+                return;
+            }
+
+            // Axis-constrained scale (axes 0–2)
+
             // Project mouse movement onto screen-space axis for better control
             Vector3 handleScreenPos = mainCamera.WorldToScreenPoint(target.position);
-            
+
             // Get screen direction of the handle
             Vector3 worldDir = GetWorldAxisDirection(draggedAxis);
             Vector3 screenEndPos = mainCamera.WorldToScreenPoint(target.position + worldDir);
-            Vector2 screenDir = new Vector2(screenEndPos.x - handleScreenPos.x, 
-                                           screenEndPos.y - handleScreenPos.y).normalized;
+            Vector2 screenDir = new Vector2(
+                screenEndPos.x - handleScreenPos.x,
+                screenEndPos.y - handleScreenPos.y
+            ).normalized;
 
             // Project mouse delta onto axis direction
-            float projectedDelta = Vector2.Dot(mouseDelta, screenDir);
-            
+            float axisProjectedDelta = Vector2.Dot(mouseDelta, screenDir);
+
             // Convert to scale factor
-            float scaleFactor = 1f + (projectedDelta * scaleSpeed);
-            
-            // Apply scale based on axis
-            if (draggedAxis == 3) // Center handle - uniform scale
-            {
-                target.localScale = scaleStartValue * scaleFactor;
-            }
-            else // Axis-constrained scale
-            {
-                Vector3 newScale = scaleStartValue;
-                newScale.x *= Mathf.Lerp(1f, scaleFactor, dragAxisDirection.x);
-                newScale.y *= Mathf.Lerp(1f, scaleFactor, dragAxisDirection.y);
-                newScale.z *= Mathf.Lerp(1f, scaleFactor, dragAxisDirection.z);
-                
-                target.localScale = newScale;
-            }
+            float axisScaleFactor = 1f + (axisProjectedDelta * scaleSpeed);
+            axisScaleFactor = Mathf.Max(axisScaleFactor, 0.01f);
+
+            // Apply scale based on axis mask
+            Vector3 newScale = scaleStartValue;
+            newScale.x *= Mathf.Lerp(1f, axisScaleFactor, dragAxisDirection.x);
+            newScale.y *= Mathf.Lerp(1f, axisScaleFactor, dragAxisDirection.y);
+            newScale.z *= Mathf.Lerp(1f, axisScaleFactor, dragAxisDirection.z);
+
+            target.localScale = newScale;
         }
+
 
         public void EndDrag()
         {

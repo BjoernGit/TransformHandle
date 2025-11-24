@@ -3,8 +3,7 @@ using UnityEngine;
 namespace MeshFreeHandles
 {
     /// <summary>
-    /// Handles hover detection specifically for scale handles (Axes and Uniform Center).
-    /// Uses shared logic from BaseHoverDetector for linear axes.
+    /// Handles hover detection specifically for scale handles (axes and uniform center).
     /// </summary>
     public class ScaleHoverDetector : BaseHoverDetector
     {
@@ -14,17 +13,20 @@ namespace MeshFreeHandles
 
         public override int GetHoveredAxis(Vector2 mousePos, Transform target, float handleScale, HandleSpace handleSpace)
         {
+            // 1. Uniform center: always prioritized if close enough
+            float centerSize = handleScale * CENTER_HANDLE_MULTIPLIER;
+            float centerDist = GetDistanceToCenterHandle(mousePos, target.position, centerSize);
+
+            if (centerDist < CENTER_THRESHOLD)
+                return 3; // uniform scale
+
+            // 2. Linear scale axes (0–2)
             float minDist = float.MaxValue;
             int axis = -1;
 
-            // 1. Check axis handles (0-2) using unified linear logic
-            // Scale typically uses local space, but we iterate 0-2 regardless
             for (int i = 0; i < 3; i++)
             {
-                Vector3 dir = GetAxisDirection(target, i, HandleSpace.Local);
-
-                // Use the same 20f radius as Translation for consistent feel
-                float dist = CalculateDistanceToLinearHandle(mousePos, target.position, dir, handleScale, tipHitRadius: 20f);
+                float dist = GetDistanceToScaleHandleInSpace(mousePos, target, i, handleScale, handleSpace);
 
                 if (dist < minDist && dist < AXIS_THRESHOLD)
                 {
@@ -33,55 +35,36 @@ namespace MeshFreeHandles
                 }
             }
 
-            // 2. Check center handle (index 3) for uniform scale
-            float centerDist = GetDistanceToCenterHandle(mousePos, target.position, handleScale * CENTER_HANDLE_MULTIPLIER);
-            if (centerDist < minDist && centerDist < CENTER_THRESHOLD)
-            {
-                axis = 3;
-            }
-
             return axis;
         }
 
         public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile)
         {
+            // 1. Uniform center: prioritized if close enough
+            float centerSize = handleScale * CENTER_HANDLE_MULTIPLIER;
+            float centerDist = GetDistanceToCenterHandle(mousePos, target.position, centerSize);
+
+            if (centerDist < CENTER_THRESHOLD)
+                return 3;
+
+            // 2. Linear axes with profile check
             float minDist = float.MaxValue;
             int axis = -1;
 
-            // 1. Check axis handles (0-2)
-            for (int i = 0; i < 3; i++)
+            foreach (HandleSpace space in System.Enum.GetValues(typeof(HandleSpace)))
             {
-                // Check local space
-                if (profile.IsAxisEnabled(HandleType.Scale, i, HandleSpace.Local))
+                for (int i = 0; i < 3; i++)
                 {
-                    float dist = GetDistanceToScaleHandleInSpace(mousePos, target, i, handleScale, HandleSpace.Local);
+                    if (!profile.IsAxisEnabled(HandleType.Scale, i, space))
+                        continue;
+
+                    float dist = GetDistanceToScaleHandleInSpace(mousePos, target, i, handleScale, space);
+
                     if (dist < minDist && dist < AXIS_THRESHOLD)
                     {
                         minDist = dist;
                         axis = i;
                     }
-                }
-
-                // Check global space (less common for scale, but supported)
-                if (profile.IsAxisEnabled(HandleType.Scale, i, HandleSpace.Global))
-                {
-                    float dist = GetDistanceToScaleHandleInSpace(mousePos, target, i, handleScale, HandleSpace.Global);
-                    if (dist < minDist && dist < AXIS_THRESHOLD)
-                    {
-                        minDist = dist;
-                        axis = i;
-                    }
-                }
-            }
-
-            // 2. Check center handle (index 3) - uniform scale
-            if (profile.IsAxisEnabled(HandleType.Scale, 3, HandleSpace.Local) ||
-                profile.IsAxisEnabled(HandleType.Scale, 3, HandleSpace.Global))
-            {
-                float centerDist = GetDistanceToCenterHandle(mousePos, target.position, handleScale * CENTER_HANDLE_MULTIPLIER);
-                if (centerDist < minDist && centerDist < CENTER_THRESHOLD)
-                {
-                    axis = 3;
                 }
             }
 
@@ -91,7 +74,6 @@ namespace MeshFreeHandles
         private float GetDistanceToScaleHandleInSpace(Vector2 mousePos, Transform target, int axisIndex, float scale, HandleSpace space)
         {
             Vector3 dir = GetAxisDirection(target, axisIndex, space);
-            // Unified call to base class logic
             return CalculateDistanceToLinearHandle(mousePos, target.position, dir, scale, tipHitRadius: 20f);
         }
 
@@ -101,7 +83,9 @@ namespace MeshFreeHandles
                 return float.MaxValue;
 
             Vector3 screenPos = mainCamera.WorldToScreenPoint(center);
-            return Vector2.Distance(mousePos, new Vector2(screenPos.x, screenPos.y));
+            Vector2 center2D = new Vector2(screenPos.x, screenPos.y);
+
+            return Vector2.Distance(mousePos, center2D);
         }
     }
 }
