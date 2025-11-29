@@ -23,20 +23,22 @@ A high-performance runtime transform handle system for Unity, inspired by Unity'
 ## 📦 Installation
 
 ### Option 1: Package Manager (Recommended)
-1. Open Unity Package Manager (Window → Package Manager)
+1. Open the Unity Package Manager (`Window → Package Manager`)
 2. Click the **+** button → **Add package from git URL**
-3. Enter: `https://github.com/BjoernGit/TransformHandle.git?path=Packages/com.bjoerngit.transformhandle`
-4. Click **Add** - Unity will download and import automatically
+3. Enter: `https://github.com/BjoernGit/TransformHandle.git?path=/Packages/com.bjoerngit.transformhandle#v1.2.0`
+4. Click **Add** – Unity will download and import automatically
 5. Done! No dependencies required
 
 ### Option 2: Manual Installation via manifest.json
-Add to your `Packages/manifest.json`:
+Add the following to your `Packages/manifest.json`:
+
 ```json
 {
   "dependencies": {
-    "com.bjoerngit.transformhandle": "https://github.com/BjoernGit/TransformHandle.git?path=Packages/com.bjoerngit.transformhandle"
+    "com.bjoerngit.transformhandle": "https://github.com/BjoernGit/TransformHandle.git?path=/Packages/com.bjoerngit.transformhandle#v1.2.0"
   }
 }
+
 ```
 
 ### Option 3: Unity Package 
