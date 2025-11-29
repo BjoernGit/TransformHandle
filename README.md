@@ -41,12 +41,7 @@ Add the following to your `Packages/manifest.json`:
 
 ```
 
-### Option 3: Unity Package 
-1. Download the latest `MeshFreeHandles_v1.1.0.unitypackage` from [Releases](https://github.com/BjoernGit/TransformHandle/releases)
-2. Import into Unity: Assets → Import Package → Custom Package
-3. Done! No dependencies required
-
-### Option 4: Manual Installation
+### Option 3: Manual Installation
 1. Clone or download this repository
 2. Copy the `Assets/Scripts/MeshFreeHandles` folder into your Unity project
 3. That's it - the system initializes automatically
