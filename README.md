@@ -53,7 +53,7 @@ Import Sample Scene (Optional)
 3. Click Import next to "Sample Scene"
 4. Find the scene in `Assets/Samples/Transform Handle/1.0.0/Sample Scene/`
 
-### 🎮 Input System Configuration
+## 🎮 Input System Configuration
 
 This project uses Unity's **legacy (old) Input System** for maximum compatibility.
 
