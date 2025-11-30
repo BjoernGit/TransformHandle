@@ -53,6 +53,25 @@ Import Sample Scene (Optional)
 3. Click Import next to "Sample Scene"
 4. Find the scene in `Assets/Samples/Transform Handle/1.0.0/Sample Scene/`
 
+### 🎮 Input System Configuration
+
+This project uses Unity's **legacy (old) Input System** for maximum compatibility.
+
+When using this package in a project that is set up with the **new Input System only**, input events may not work as expected.  
+In this case, Unity needs to be configured to support **both input systems**.
+
+#### How to fix
+
+1. Open **Edit → Project Settings**
+2. Navigate to **Player**
+3. Set **Active Input Handling** to **Both**
+4. Restart Unity when prompted
+
+This allows the package to work correctly while keeping compatibility with projects that already rely on the new Input System.
+
+<img width="604" height="265" alt="image" src="https://github.com/user-attachments/assets/41c830b8-000a-43ab-b78e-9e56a74a97ca" />
+
+
 ## 🚀 Quick Start
 
 There is an included `TransformHandleKeyManager` and a `SelectionManager` to directly use this package.
