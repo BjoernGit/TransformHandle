@@ -25,7 +25,7 @@ A high-performance runtime transform handle system for Unity, inspired by Unity'
 ### Option 1: Package Manager (Recommended)
 1. Open the Unity Package Manager (`Window → Package Manager`)
 2. Click the **+** button → **Add package from git URL**
-3. Enter: `https://github.com/BjoernGit/TransformHandle.git?path=/Packages/com.bjoerngit.transformhandle#v1.2.0`
+3. Enter: `https://github.com/BjoernGit/TransformHandle.git?path=/Packages/com.bjoerngit.transformhandle#v1.2.1`
 4. Click **Add** – Unity will download and import automatically
 5. Done! No dependencies required
 
@@ -35,7 +35,7 @@ Add the following to your `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.bjoerngit.transformhandle": "https://github.com/BjoernGit/TransformHandle.git?path=/Packages/com.bjoerngit.transformhandle#v1.2.0"
+    "com.bjoerngit.transformhandle": "https://github.com/BjoernGit/TransformHandle.git?path=/Packages/com.bjoerngit.transformhandle#v1.2.1"
   }
 }
 
