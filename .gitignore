@@ -84,3 +84,10 @@ crashlytics-build.properties
 /[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers
 /[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers.meta
 ProjectSettings/
+Assets/
+ProjectSettings/
+.vscode/
+Library/
+Logs/
+Temp/
+UserSettings/
