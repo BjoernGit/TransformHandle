@@ -11,6 +11,14 @@ namespace MeshFreeHandles
         private static TransformHandleManager instance;
         private int lastHoveredAxis = -1;
 
+        // Effective camera currently used by interaction/renderer
+        private Camera activeCamera;
+
+        // Cached target state for change detection (OnTransformModified)
+        private Vector3 lastTargetPosition;
+        private Quaternion lastTargetRotation;
+        private Vector3 lastTargetScale;
+
         // Components
         private HandleInteraction interaction;
         private HandleRenderer handleRenderer;
@@ -86,7 +94,7 @@ namespace MeshFreeHandles
                 if (handleCamera != value)
                 {
                     handleCamera = value;
-                    UpdateCameraReferences();
+                    RefreshCameraReferences();
                 }
             }
         }
@@ -126,25 +134,19 @@ namespace MeshFreeHandles
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // Initialize components
-            Camera cam = HandleCamera;
-            interaction = new HandleInteraction(cam);
-            handleRenderer = new HandleRenderer(cam);
+            // Initialize components with the effective camera
+            RefreshCameraReferences();
         }
 
         void Update()
         {
+            // Keep interaction/renderer in sync with the effective camera
+            // (explicit camera, Camera.main fallback, or destroyed camera).
+            RefreshCameraReferences();
+
             if (!HandlesEnabled) return;
 
-            // Check if camera was destroyed
-            if (handleCamera != null && !handleCamera)
-            {
-                // Camera was destroyed, reset to null
-                handleCamera = null;
-                UpdateCameraReferences();
-            }
-
-            if (targetTransform == null || handleCamera == null) return;
+            if (targetTransform == null || activeCamera == null) return;
 
             // Update interaction target every frame
             interaction.UpdateTarget(targetTransform);
@@ -176,18 +178,41 @@ namespace MeshFreeHandles
                 lastHoveredAxis = currentHovered;
             }
 
-            // Check if transform was modified (for event firing)
-            if (interaction.IsDragging)
+            // Fire modification event only when the transform actually changed
+            if (interaction.IsDragging && HasTargetChanged())
             {
                 OnTransformModified?.Invoke(targetTransform);
             }
+            CacheTargetState();
         }
 
-        private void UpdateCameraReferences()
+        /// <summary>
+        /// Recreates interaction/renderer when the effective camera changed
+        /// (explicit camera assigned, Camera.main fallback switched, or camera destroyed).
+        /// </summary>
+        private void RefreshCameraReferences()
         {
-            interaction = new HandleInteraction(HandleCamera);
+            Camera cam = HandleCamera;
+            if (cam == activeCamera && interaction != null) return;
+
+            activeCamera = cam;
+            interaction = new HandleInteraction(cam);
             handleRenderer?.Cleanup();
-            handleRenderer = new HandleRenderer(HandleCamera);
+            handleRenderer = new HandleRenderer(cam);
+        }
+
+        private bool HasTargetChanged()
+        {
+            return targetTransform.position != lastTargetPosition
+                || targetTransform.rotation != lastTargetRotation
+                || targetTransform.localScale != lastTargetScale;
+        }
+
+        private void CacheTargetState()
+        {
+            lastTargetPosition = targetTransform.position;
+            lastTargetRotation = targetTransform.rotation;
+            lastTargetScale = targetTransform.localScale;
         }
 
         /// <summary>
@@ -311,7 +336,7 @@ namespace MeshFreeHandles
 
         void OnRenderObject()
         {
-            if (targetTransform == null || HandleCamera == null) return;
+            if (targetTransform == null || HandleCamera == null || handleRenderer == null) return;
 
 #if UNITY_EDITOR
             if (UnityEditor.SceneView.currentDrawingSceneView != null) return;
