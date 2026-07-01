@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to Semantic Versioning.
 
-## [Unreleased]
+## [1.3.0] – 2026-07-01
 ### Added
 - Support for both the legacy Input Manager and the new Input System package via the new `HandleInput` abstraction — setting *Active Input Handling* to *Both* is no longer required
 
