@@ -55,21 +55,14 @@ Import Sample Scene (Optional)
 
 ## 🎮 Input System Configuration
 
-This project uses Unity's **legacy (old) Input System** for maximum compatibility.
+The package supports **both** Unity input backends out of the box — no configuration required:
 
-When using this package in a project that is set up with the **new Input System only**, input events may not work as expected.  
-In this case, Unity needs to be configured to support **both input systems**.
+- **Legacy Input Manager** (*Active Input Handling: Input Manager (Old)* or *Both*)
+- **New Input System** (*Active Input Handling: Input System Package (New)* or *Both*)
 
-#### How to fix
-
-1. Open **Edit → Project Settings**
-2. Navigate to **Player**
-3. Set **Active Input Handling** to **Both**
-4. Restart Unity when prompted
-
-This allows the package to work correctly while keeping compatibility with projects that already rely on the new Input System.
-
-<img width="604" height="265" alt="image" src="https://github.com/user-attachments/assets/41c830b8-000a-43ab-b78e-9e56a74a97ca" />
+The matching backend is selected automatically at compile time. When the new Input System package
+(`com.unity.inputsystem`) is installed and active, the handles read input through it; otherwise they
+fall back to the legacy `Input` class.
 
 
 ## 🚀 Quick Start

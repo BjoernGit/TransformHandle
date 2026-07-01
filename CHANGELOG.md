@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to Semantic Versioning.
 
+## [Unreleased]
+### Added
+- Support for both the legacy Input Manager and the new Input System package via the new `HandleInput` abstraction — setting *Active Input Handling* to *Both* is no longer required
+
+### Changed
+- `IDragHandler.StartDrag` now receives the handle scale computed by the manager; drag handlers no longer estimate their own scale (plane offsets and rotation radii now match the rendered handle size)
+- Single-axis translation and scale drags use a world-space ray-to-axis projection: exact 1:1 cursor tracking, immune to viewport rects / split-screen setups and view angle
+
+### Fixed
+- Objects could be dragged in the wrong direction along an arrow at certain view angles or with non-fullscreen camera viewports
+- Handles rendered but did not react to input when no camera was explicitly assigned (interaction ignored the `Camera.main` fallback)
+- Scale drag ignored the handle space and always projected onto local axes
+- Mixed-space profiles: dragging now uses the space of the element that was actually hovered instead of always preferring Local
+- Handle geometry was rendered twice per frame due to a broken batcher ownership check
+- `OnTransformModified` fired every frame during a drag even when the transform did not change
+
 ## [1.2.1] – 2025-11-29
 ### Fixed
 - Sample scene camera configuration
