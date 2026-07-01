@@ -39,19 +39,19 @@ namespace MeshFreeHandles
         void Update()
         {
             // Skip if right mouse button is pressed (camera navigation mode)
-            if (Input.GetMouseButton(1)) return;
-           
+            if (HandleInput.RightMouseHeld) return;
+
             // Check for key presses
-            if (Input.GetKeyDown(translationKey))
+            if (HandleInput.GetKeyDown(translationKey))
                 onSetTranslation?.Invoke();
-               
-            if (Input.GetKeyDown(rotationKey))
+
+            if (HandleInput.GetKeyDown(rotationKey))
                 onSetRotation?.Invoke();
-               
-            if (Input.GetKeyDown(scaleKey))
+
+            if (HandleInput.GetKeyDown(scaleKey))
                 onSetScale?.Invoke();
-               
-            if (Input.GetKeyDown(handleSpaceToggleKey))
+
+            if (HandleInput.GetKeyDown(handleSpaceToggleKey))
                 onToggleHandleSpace?.Invoke();
         }
     }

@@ -31,19 +31,19 @@ namespace MeshFreeHandles
         private float scrollVelocity;
         
         // For mouse delta calculation
-        private Vector3 lastMousePosition;
-        
+        private Vector2 lastMousePosition;
+
         void Awake()
         {
             cam = GetComponent<Camera>();
             if (cam == null)
                 cam = Camera.main;
-                
+
             // Initialize rotation from current transform
             currentRotation.x = transform.eulerAngles.x;
             currentRotation.y = transform.eulerAngles.y;
-            
-            lastMousePosition = Input.mousePosition;
+
+            lastMousePosition = HandleInput.MousePosition;
         }
         
         void Update()
@@ -56,28 +56,28 @@ namespace MeshFreeHandles
         private void HandleMovement()
         {
             // Only move when right mouse button is held
-            bool isRightMousePressed = Input.GetMouseButton(1);
-            
+            bool isRightMousePressed = HandleInput.RightMouseHeld;
+
             Vector3 inputDirection = Vector3.zero;
-            
+
             if (isRightMousePressed)
             {
                 // Get input
-                if (Input.GetKey(KeyCode.W)) inputDirection += Vector3.forward;
-                if (Input.GetKey(KeyCode.S)) inputDirection -= Vector3.forward;
-                if (Input.GetKey(KeyCode.A)) inputDirection -= Vector3.right;
-                if (Input.GetKey(KeyCode.D)) inputDirection += Vector3.right;
-                if (Input.GetKey(KeyCode.Q)) inputDirection -= Vector3.up;
-                if (Input.GetKey(KeyCode.E)) inputDirection += Vector3.up;
-                
+                if (HandleInput.GetKey(KeyCode.W)) inputDirection += Vector3.forward;
+                if (HandleInput.GetKey(KeyCode.S)) inputDirection -= Vector3.forward;
+                if (HandleInput.GetKey(KeyCode.A)) inputDirection -= Vector3.right;
+                if (HandleInput.GetKey(KeyCode.D)) inputDirection += Vector3.right;
+                if (HandleInput.GetKey(KeyCode.Q)) inputDirection -= Vector3.up;
+                if (HandleInput.GetKey(KeyCode.E)) inputDirection += Vector3.up;
+
                 // Normalize input
                 if (inputDirection.magnitude > 1f)
                     inputDirection.Normalize();
             }
-            
+
             // Speed modifier
             float targetSpeed = moveSpeed;
-            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+            if (HandleInput.GetKey(KeyCode.LeftShift) || HandleInput.GetKey(KeyCode.RightShift))
                 targetSpeed *= shiftSpeedMultiplier;
             
             // Calculate target velocity in world space
@@ -104,14 +104,14 @@ namespace MeshFreeHandles
         
         private void HandleRotation()
         {
-            if (!Input.GetMouseButton(1)) 
+            if (!HandleInput.RightMouseHeld)
             {
-                lastMousePosition = Input.mousePosition;
+                lastMousePosition = HandleInput.MousePosition;
                 return;
             }
-            
+
             // Calculate mouse delta manually
-            Vector3 currentMousePosition = Input.mousePosition;
+            Vector2 currentMousePosition = HandleInput.MousePosition;
             Vector2 mouseDelta = currentMousePosition - lastMousePosition;
             lastMousePosition = currentMousePosition;
             
@@ -144,7 +144,7 @@ namespace MeshFreeHandles
         
         private void HandleScroll()
         {
-            float scrollInput = Input.mouseScrollDelta.y;
+            float scrollInput = HandleInput.MouseScrollDelta.y;
             
             if (Mathf.Abs(scrollInput) > 0.01f)
             {

@@ -58,17 +58,17 @@ namespace MeshFreeHandles
                 if (mainCamera == null) return;
             }
             
-            if (Input.GetMouseButtonDown(0))
+            if (HandleInput.LeftMousePressedThisFrame)
             {
                 // Skip if clicking on UI
                 if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                     return;
-                
+
                 // Skip if hovering over a handle
                 if (TransformHandleManager.Instance.IsHovering)
                     return;
-                
-                Ray ray = TransformHandleManager.Instance.HandleCamera.ScreenPointToRay(Input.mousePosition);
+
+                Ray ray = TransformHandleManager.Instance.HandleCamera.ScreenPointToRay(HandleInput.MousePosition);
                 RaycastHit hit;
                 
                 if (Physics.Raycast(ray, out hit, maxSelectionDistance, selectableLayerMask))
