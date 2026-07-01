@@ -15,7 +15,8 @@ namespace MeshFreeHandles
         /// <param name="axis">Index of the axis being dragged (0=X,1=Y,2=Z).</param>
         /// <param name="mousePos">Current mouse position in screen space.</param>
         /// <param name="handleSpace">Local or Global axis space.</param>
-        void StartDrag(Transform target, int axis, Vector2 mousePos, HandleSpace handleSpace);
+        /// <param name="handleScale">World-space size of the rendered handle (as computed by the manager).</param>
+        void StartDrag(Transform target, int axis, Vector2 mousePos, HandleSpace handleSpace, float handleScale);
 
         /// <summary>
         /// Called each frame during dragging.

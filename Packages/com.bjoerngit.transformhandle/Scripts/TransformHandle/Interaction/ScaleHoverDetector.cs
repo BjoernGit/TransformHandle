@@ -20,7 +20,7 @@ namespace MeshFreeHandles
             if (centerDist < CENTER_THRESHOLD)
                 return 3; // uniform scale
 
-            // 2. Linear scale axes (0–2)
+            // 2. Linear scale axes (0ï¿½2)
             float minDist = float.MaxValue;
             int axis = -1;
 
@@ -38,14 +38,22 @@ namespace MeshFreeHandles
             return axis;
         }
 
-        public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile)
+        public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile, out HandleSpace hoveredSpace)
         {
+            hoveredSpace = HandleSpace.Local;
+
             // 1. Uniform center: prioritized if close enough
             float centerSize = handleScale * CENTER_HANDLE_MULTIPLIER;
             float centerDist = GetDistanceToCenterHandle(mousePos, target.position, centerSize);
 
             if (centerDist < CENTER_THRESHOLD)
+            {
+                // Uniform scale is space-agnostic; report an enabled space
+                hoveredSpace = profile.IsAxisEnabled(HandleType.Scale, 3, HandleSpace.Local)
+                    ? HandleSpace.Local
+                    : HandleSpace.Global;
                 return 3;
+            }
 
             // 2. Linear axes with profile check
             float minDist = float.MaxValue;
@@ -64,6 +72,7 @@ namespace MeshFreeHandles
                     {
                         minDist = dist;
                         axis = i;
+                        hoveredSpace = space;
                     }
                 }
             }

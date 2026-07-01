@@ -43,20 +43,23 @@ namespace MeshFreeHandles
 
         /// <summary>
         /// Returns the index of the hovered axis using a profile for mixed-space support.
+        /// Also reports which space the hovered element belongs to.
         /// </summary>
-        public int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleType handleType, HandleProfile profile)
+        public int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleType handleType, HandleProfile profile, out HandleSpace hoveredSpace)
         {
+            hoveredSpace = HandleSpace.Local;
+
             if (!IsValidForDetection(target) || profile == null)
                 return -1;
 
             switch (handleType)
             {
                 case HandleType.Translation:
-                    return translationDetector.GetHoveredAxisWithProfile(mousePos, target, handleScale, profile);
+                    return translationDetector.GetHoveredAxisWithProfile(mousePos, target, handleScale, profile, out hoveredSpace);
                 case HandleType.Rotation:
-                    return rotationDetector.GetHoveredAxisWithProfile(mousePos, target, handleScale, profile);
+                    return rotationDetector.GetHoveredAxisWithProfile(mousePos, target, handleScale, profile, out hoveredSpace);
                 case HandleType.Scale:
-                    return scaleDetector.GetHoveredAxisWithProfile(mousePos, target, handleScale, profile);
+                    return scaleDetector.GetHoveredAxisWithProfile(mousePos, target, handleScale, profile, out hoveredSpace);
                 default:
                     return -1;
             }

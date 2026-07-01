@@ -15,7 +15,7 @@ namespace MeshFreeHandles
             float minDist = float.MaxValue;
             int axis = -1;
 
-            // Planes first (indices 4–6)
+            // Planes first (indices 4ï¿½6)
             float planeScale = handleScale * TranslationHandleRenderer.PLANE_SIZE_MULTIPLIER;
             Vector3 camForward = mainCamera.transform.forward;
 
@@ -33,7 +33,7 @@ namespace MeshFreeHandles
                 }
             }
 
-            // Linear axes (0–2)
+            // Linear axes (0ï¿½2)
             for (int i = 0; i < 3; i++)
             {
                 Vector3 dir = TranslationHandleUtils.GetAxisDirection(target, i, handleSpace);
@@ -50,15 +50,16 @@ namespace MeshFreeHandles
         }
 
 
-        public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile)
+        public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile, out HandleSpace hoveredSpace)
         {
             float minDist = float.MaxValue;
             int axis = -1;
+            hoveredSpace = HandleSpace.Local;
 
             // Planes first
-            CheckPlanesWithProfile(mousePos, target, handleScale, profile, ref minDist, ref axis);
+            CheckPlanesWithProfile(mousePos, target, handleScale, profile, ref minDist, ref axis, ref hoveredSpace);
 
-            // Linear axes (0–2)
+            // Linear axes (0-2)
             for (int i = 0; i < 3; i++)
             {
                 foreach (HandleSpace space in System.Enum.GetValues(typeof(HandleSpace)))
@@ -72,6 +73,7 @@ namespace MeshFreeHandles
                         {
                             minDist = dist;
                             axis = i;
+                            hoveredSpace = space;
                         }
                     }
                 }
@@ -83,7 +85,7 @@ namespace MeshFreeHandles
 
 
         private void CheckPlanesWithProfile(Vector2 mousePos, Transform target, float handleScale,
-                                           HandleProfile profile, ref float minDist, ref int axis)
+                                           HandleProfile profile, ref float minDist, ref int axis, ref HandleSpace hoveredSpace)
         {
             float planeSize = handleScale * TranslationHandleRenderer.PLANE_SIZE_MULTIPLIER;
             Vector3 camForward = mainCamera.transform.forward;
@@ -102,6 +104,7 @@ namespace MeshFreeHandles
                         {
                             minDist = dist;
                             axis = planeIndex;
+                            hoveredSpace = space;
                         }
                     }
                 }

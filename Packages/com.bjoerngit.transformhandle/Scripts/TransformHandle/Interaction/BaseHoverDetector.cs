@@ -20,7 +20,13 @@ namespace MeshFreeHandles
         }
 
         public abstract int GetHoveredAxis(Vector2 mousePos, Transform target, float handleScale, HandleSpace handleSpace);
-        public abstract int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile);
+
+        /// <summary>
+        /// Returns the hovered axis index (or -1) and reports which space the
+        /// hovered element belongs to, so the drag uses the arrow that was
+        /// actually hovered when an axis is enabled in both spaces.
+        /// </summary>
+        public abstract int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile, out HandleSpace hoveredSpace);
 
         /// <summary>
         /// Calculates the screen-space distance to a linear handle (shaft + end cap).

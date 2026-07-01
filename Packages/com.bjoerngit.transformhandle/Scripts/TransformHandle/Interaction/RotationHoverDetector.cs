@@ -36,13 +36,13 @@ namespace MeshFreeHandles
             if (freeRotationDist < minDist && freeRotationDist < ROTATION_THRESHOLD)
             {
                 minDist = freeRotationDist;
-                axis = 3; // Roll Rotation Ring gewinnt über Achsen 0-2, wenn näher
+                axis = 3; // Roll Rotation Ring gewinnt ï¿½ber Achsen 0-2, wenn nï¿½her
             }
 
             // 3. FALLBACK LOGIC FOR TRACKBALL (Axis 7): Check if mouse is inside the bounding area
-            //    Wähle Axis 7, wenn:
+            //    Wï¿½hle Axis 7, wenn:
             //    a) Bisher keine Achse getroffen wurde (axis == -1)
-            //    b) ODER die am nächsten getroffene Achse weiter entfernt ist als der ROTATION_THRESHOLD (d.h. kein präziser Treffer)
+            //    b) ODER die am nï¿½chsten getroffene Achse weiter entfernt ist als der ROTATION_THRESHOLD (d.h. kein prï¿½ziser Treffer)
             if (axis == -1 || minDist > ROTATION_THRESHOLD)
             {
                 float freeRotationWorldRadius = handleScale * FREE_ROTATION_SCALE;
@@ -53,7 +53,7 @@ namespace MeshFreeHandles
                 // If the mouse is visually inside the handle area
                 if (distToCenter < freeRotationScreenRadius)
                 {
-                    // Setzt Achse 7, da kein präziser Treffer auf 0, 1, 2 oder 3 vorlag.
+                    // Setzt Achse 7, da kein prï¿½ziser Treffer auf 0, 1, 2 oder 3 vorlag.
                     axis = 7;
                 }
             }
@@ -61,10 +61,11 @@ namespace MeshFreeHandles
             return axis;
         }
 
-        public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile)
+        public override int GetHoveredAxisWithProfile(Vector2 mousePos, Transform target, float handleScale, HandleProfile profile, out HandleSpace hoveredSpace)
         {
             float minDist = float.MaxValue;
             int axis = -1;
+            hoveredSpace = HandleSpace.Local;
 
             // 1. Check normal rotation axes (0-2)
             for (int i = 0; i < 3; i++)
@@ -77,6 +78,7 @@ namespace MeshFreeHandles
                     {
                         minDist = dist;
                         axis = i;
+                        hoveredSpace = HandleSpace.Local;
                     }
                 }
 
@@ -88,6 +90,7 @@ namespace MeshFreeHandles
                     {
                         minDist = dist;
                         axis = i;
+                        hoveredSpace = HandleSpace.Global;
                     }
                 }
             }
@@ -110,6 +113,10 @@ namespace MeshFreeHandles
                     if (axis == -1 || minDist > ROTATION_THRESHOLD)
                     {
                         axis = 3;
+                        // Roll rotation is a camera-space operation; report an enabled space
+                        hoveredSpace = profile.IsAxisEnabled(HandleType.Rotation, 3, HandleSpace.Global)
+                            ? HandleSpace.Global
+                            : HandleSpace.Local;
                     }
                 }
             }

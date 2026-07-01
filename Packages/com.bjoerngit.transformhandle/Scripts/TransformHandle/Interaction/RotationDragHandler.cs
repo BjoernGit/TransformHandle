@@ -28,15 +28,19 @@ namespace MeshFreeHandles
         private bool isTrackballRotation; // Axis 7: Trackball Rotation
         private Vector2 lastMousePos;
 
+        // Handle scale as computed by the manager (matches the rendered size)
+        private float handleScale;
+
         public RotationDragHandler(Camera camera)
         {
             mainCamera = camera;
         }
 
-        public void StartDrag(Transform target, int axis, Vector2 mousePos, HandleSpace space)
+        public void StartDrag(Transform target, int axis, Vector2 mousePos, HandleSpace space, float handleScale)
         {
             this.target = target;
             this.draggedAxis = axis;
+            this.handleScale = handleScale;
 
             // Determine rotation mode
             this.isFreeRotation = (axis == 3); // Axis 3 is the Roll Rotation ring
@@ -180,7 +184,7 @@ namespace MeshFreeHandles
             float bestDot = -1f;
             float bestAngle = 0f;
             int samples = 36;
-            float radius = GetHandleScale();
+            float radius = handleScale;
 
             // Use larger radius for free rotation (Roll)
             if (axis == 3)
@@ -207,12 +211,6 @@ namespace MeshFreeHandles
             Vector3 tangentEndScreen3D = mainCamera.WorldToScreenPoint(target.position + tangent3D * radius);
             ellipseTangent = new Vector2(tangentEndScreen3D.x - centerScreen2D.x,
                                          tangentEndScreen3D.y - centerScreen2D.y).normalized;
-        }
-
-        private float GetHandleScale()
-        {
-            float dist = Vector3.Distance(mainCamera.transform.position, target.position);
-            return dist * 0.1f;
         }
 
         // Helper function: raises quaternion to power t
