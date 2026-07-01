@@ -15,8 +15,7 @@ namespace MeshFreeHandles
         // Single axis drag
         private Vector3 dragStartWorldPos;
         private Vector3 axisDirection;
-        private Vector2 dragStartScreenPos;
-        private Vector3 dragStartTargetScreenPos;
+        private float dragStartAxisOffset; // Grabbed point along the axis at drag start
 
         // Plane drag
         private bool isDraggingPlane;
@@ -49,12 +48,17 @@ namespace MeshFreeHandles
 
         private void StartAxisDrag(Vector2 mousePos, HandleSpace space)
         {
-            // Get axis direction using utils
+            // Get axis direction using utils (unit length, world space)
             axisDirection = TranslationHandleUtils.GetAxisDirection(target, draggedAxis, space);
-            
-            // Store start positions
-            dragStartScreenPos = mousePos;
-            dragStartTargetScreenPos = mainCamera.WorldToScreenPoint(target.position);
+
+            // Remember which point along the axis line the user grabbed.
+            // Everything else works in world space, so the drag is immune to
+            // camera distance, viewport rect / split-screen and view angle.
+            Ray ray = mainCamera.ScreenPointToRay(mousePos);
+            if (TryGetAxisOffset(ray, out float offset))
+                dragStartAxisOffset = offset;
+            else
+                dragStartAxisOffset = 0f;
         }
 
         private void StartPlaneDrag(Vector2 mousePos, HandleSpace space)
@@ -98,26 +102,45 @@ namespace MeshFreeHandles
 
         private void UpdateAxisDrag(Vector2 mousePos)
         {
-            // Calculate how much the mouse moved
-            Vector2 mouseDelta = mousePos - dragStartScreenPos;
-            
-            // Project the axis direction to screen space
-            Vector3 axisEndWorld = dragStartWorldPos + axisDirection;
-            Vector3 axisEndScreen = mainCamera.WorldToScreenPoint(axisEndWorld);
-            Vector2 axisScreenDirection = new Vector2(
-                axisEndScreen.x - dragStartTargetScreenPos.x,
-                axisEndScreen.y - dragStartTargetScreenPos.y
-            ).normalized;
-            
-            // Calculate movement along the axis
-            float screenMovement = Vector2.Dot(mouseDelta, axisScreenDirection);
-            
-            // Convert screen movement to world movement
-            float distanceToCamera = Vector3.Distance(mainCamera.transform.position, dragStartWorldPos);
-            float worldMovement = screenMovement * distanceToCamera * 0.001f;
-            
-            // Apply movement
+            Ray ray = mainCamera.ScreenPointToRay(mousePos);
+
+            // Find where the mouse ray is closest to the axis line. If the ray is
+            // (almost) parallel to the axis - i.e. looking straight down the arrow -
+            // the projection is undefined, so we keep the current position instead
+            // of letting it jump.
+            if (!TryGetAxisOffset(ray, out float offset))
+                return;
+
+            float worldMovement = offset - dragStartAxisOffset;
             target.position = dragStartWorldPos + axisDirection * worldMovement;
+        }
+
+        /// <summary>
+        /// Projects the closest point between the mouse ray and the axis line
+        /// (through the drag start position, along <see cref="axisDirection"/>)
+        /// onto the axis and returns its signed distance from the start position.
+        /// Returns false when the ray is nearly parallel to the axis.
+        /// </summary>
+        private bool TryGetAxisOffset(Ray ray, out float offset)
+        {
+            offset = 0f;
+
+            Vector3 d = axisDirection;      // axis line direction (unit length)
+            Vector3 r = ray.direction;      // mouse ray direction (unit length)
+            Vector3 w0 = dragStartWorldPos - ray.origin;
+
+            float b = Vector3.Dot(d, r);
+            float denom = 1f - b * b;       // = (d·d)(r·r) - (d·r)^2, with unit vectors
+
+            if (denom < 1e-6f)
+                return false;               // ray parallel to axis -> undefined
+
+            float dW0 = Vector3.Dot(d, w0);
+            float rW0 = Vector3.Dot(r, w0);
+
+            // Scalar along the axis for the closest point to the ray.
+            offset = (b * rW0 - dW0) / denom;
+            return true;
         }
 
         private void UpdatePlaneDrag(Vector2 mousePos)
