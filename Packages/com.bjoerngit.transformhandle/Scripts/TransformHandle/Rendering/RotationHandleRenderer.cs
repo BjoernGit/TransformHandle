@@ -15,28 +15,32 @@ namespace MeshFreeHandles
 
         // Batching system
         private BatchedHandleRenderer batcher;
+        private readonly bool ownsBatcher;
 
         // Constructors
         public RotationHandleRenderer(BatchedHandleRenderer sharedBatcher)
         {
             this.batcher = sharedBatcher;
+            this.ownsBatcher = false; // owner clears and renders the batch
         }
 
         public RotationHandleRenderer(Camera camera)
         {
             this.batcher = new BatchedHandleRenderer(camera);
+            this.ownsBatcher = true;
         }
 
         public RotationHandleRenderer()
         {
             Debug.LogWarning("RotationHandleRenderer created without camera - won't render!");
             this.batcher = new BatchedHandleRenderer(null);
+            this.ownsBatcher = true;
         }
 
         public void Render(Transform target, float scale, int hoveredAxis, HandleSpace handleSpace = HandleSpace.Local)
         {
             // Only clear if we own the batcher
-            if (batcher != null && batcher.GetHashCode() == this.batcher.GetHashCode())
+            if (ownsBatcher)
                 batcher.Clear();
             
             Vector3 position = target.position;
@@ -56,14 +60,14 @@ namespace MeshFreeHandles
             CollectCameraFacingCircle(position, scale * 1.2f, camera, hoveredAxis == 3);
 
             // Only render if we own the batcher
-            if (batcher != null && batcher.GetHashCode() == this.batcher.GetHashCode())
+            if (ownsBatcher)
                 batcher.Render();
         }
 
         public void RenderWithProfile(Transform target, float scale, int hoveredAxis, HandleProfile profile)
         {
             // Only clear if we own the batcher
-            if (batcher != null && batcher.GetHashCode() == this.batcher.GetHashCode())
+            if (ownsBatcher)
                 batcher.Clear();
             
             Vector3 position = target.position;
@@ -93,7 +97,7 @@ namespace MeshFreeHandles
             }
 
             // Only render if we own the batcher
-            if (batcher != null && batcher.GetHashCode() == this.batcher.GetHashCode())
+            if (ownsBatcher)
                 batcher.Render();
         }
 
