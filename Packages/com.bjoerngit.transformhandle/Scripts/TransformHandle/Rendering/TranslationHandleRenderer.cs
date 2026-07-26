@@ -55,7 +55,6 @@ namespace MeshFreeHandles
             // Collect all geometry first
             CollectPlanes(position, target, scale, hoveredAxis, handleSpace);
             CollectAxesInternal(position, target, scale, hoveredAxis, (axis, checkSpace) => checkSpace == handleSpace);
-            CollectCenterPoint(position, scale * 0.1f);
 
             // Only render if we own the batcher
             if (ownsBatcher)
@@ -74,7 +73,6 @@ namespace MeshFreeHandles
             CollectPlanesWithProfile(target, position, scale, hoveredAxis, profile);
             CollectAxesInternal(position, target, scale, hoveredAxis,
                 (axis, space) => profile.IsAxisEnabled(HandleType.Translation, axis, space));
-            CollectCenterPoint(position, scale * 0.1f);
 
             // Only render if we own the batcher
             if (ownsBatcher)
@@ -177,14 +175,6 @@ namespace MeshFreeHandles
             batcher.AddLine(corners[1], corners[2], outlineColor);
             batcher.AddLine(corners[2], corners[3], outlineColor);
             batcher.AddLine(corners[3], corners[0], outlineColor);
-        }
-
-        private void CollectCenterPoint(Vector3 center, float size)
-        {
-            Color color = new Color(1f, 1f, 1f, 0.5f);
-            batcher.AddLine(center + Vector3.right * size, center - Vector3.right * size, color);
-            batcher.AddLine(center + Vector3.up * size, center - Vector3.up * size, color);
-            batcher.AddLine(center + Vector3.forward * size, center - Vector3.forward * size, color);
         }
     }
 }
