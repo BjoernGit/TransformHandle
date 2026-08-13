@@ -1,6 +1,6 @@
 {
   "name": "com.bjoerngit.transformhandle",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "displayName": "Transform Handle",
   "description": "Runtime transform handles for Unity without mesh generation",
   "unity": "2020.3",
