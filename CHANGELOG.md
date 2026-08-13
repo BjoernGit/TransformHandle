@@ -6,6 +6,10 @@ The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.
 and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
+### Added
+- Handle profiles can now enable the roll ring (*Show Free Rotation*) and the trackball area (*Show Trackball Rotation*) independently — previously both were unreachable for any target using a profile
+- Handle profile option *Show Full Rotation Circles*: draws rotation circles as complete ellipses and makes the camera-facing-away half interactive, instead of hiding it — intended for profiles that expose only a single rotation axis
+
 ### Fixed
 - Uniform scale centre could be hovered and dragged even when disabled in the handle profile
 

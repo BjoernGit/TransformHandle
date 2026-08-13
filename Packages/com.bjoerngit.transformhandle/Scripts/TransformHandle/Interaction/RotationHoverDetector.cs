@@ -73,7 +73,7 @@ namespace MeshFreeHandles
                 // Check local space
                 if (profile.IsAxisEnabled(HandleType.Rotation, i, HandleSpace.Local))
                 {
-                    float dist = GetDistanceToCircleInSpace(mousePos, target, i, handleScale, HandleSpace.Local);
+                    float dist = GetDistanceToCircleInSpace(mousePos, target, i, handleScale, HandleSpace.Local, profile.ShowFullRotationCircles);
                     if (dist < minDist && dist < ROTATION_THRESHOLD)
                     {
                         minDist = dist;
@@ -85,7 +85,7 @@ namespace MeshFreeHandles
                 // Check global space
                 if (profile.IsAxisEnabled(HandleType.Rotation, i, HandleSpace.Global))
                 {
-                    float dist = GetDistanceToCircleInSpace(mousePos, target, i, handleScale, HandleSpace.Global);
+                    float dist = GetDistanceToCircleInSpace(mousePos, target, i, handleScale, HandleSpace.Global, profile.ShowFullRotationCircles);
                     if (dist < minDist && dist < ROTATION_THRESHOLD)
                     {
                         minDist = dist;
@@ -95,11 +95,22 @@ namespace MeshFreeHandles
                 }
             }
 
-            // 2. FALLBACK LOGIC FOR FREE ROTATION (Axis 3) WITH PROFILE CHECK
+            // 2. Roll Rotation Ring (Axis 3) - higher priority than the trackball area
+            if (profile.IsAxisEnabled(HandleType.Rotation, 3, HandleSpace.Local))
+            {
+                float freeRotationDist = GetDistanceToFreeRotationCircle(mousePos, target.position, handleScale * FREE_ROTATION_SCALE);
+                if (freeRotationDist < minDist && freeRotationDist < ROTATION_THRESHOLD)
+                {
+                    minDist = freeRotationDist;
+                    axis = 3;
+                    // Roll rotation is a camera-space operation; space is irrelevant for the drag
+                    hoveredSpace = HandleSpace.Local;
+                }
+            }
 
-            // Check if free rotation is enabled in the profile
-            if (profile.IsAxisEnabled(HandleType.Rotation, 3, HandleSpace.Local) ||
-                profile.IsAxisEnabled(HandleType.Rotation, 3, HandleSpace.Global))
+            // 3. FALLBACK LOGIC FOR TRACKBALL (Axis 7): mouse inside the handle area
+            if (profile.IsAxisEnabled(HandleType.Rotation, 7, HandleSpace.Local) &&
+                (axis == -1 || minDist > ROTATION_THRESHOLD))
             {
                 float freeRotationWorldRadius = handleScale * FREE_ROTATION_SCALE;
                 float freeRotationScreenRadius = GetHandleScreenRadius(target.position, freeRotationWorldRadius);
@@ -109,28 +120,22 @@ namespace MeshFreeHandles
                 // If the mouse is visually inside the handle area
                 if (distToCenter < freeRotationScreenRadius)
                 {
-                    // If no direct axis hit was found, use axis 3 as fallback
-                    if (axis == -1 || minDist > ROTATION_THRESHOLD)
-                    {
-                        axis = 3;
-                        // Roll rotation is a camera-space operation; report an enabled space
-                        hoveredSpace = profile.IsAxisEnabled(HandleType.Rotation, 3, HandleSpace.Global)
-                            ? HandleSpace.Global
-                            : HandleSpace.Local;
-                    }
+                    axis = 7;
+                    // Trackball rotation is a camera-space operation; space is irrelevant for the drag
+                    hoveredSpace = HandleSpace.Local;
                 }
             }
 
             return axis;
         }
 
-        private float GetDistanceToCircleInSpace(Vector2 mousePos, Transform target, int axisIndex, float radius, HandleSpace space)
+        private float GetDistanceToCircleInSpace(Vector2 mousePos, Transform target, int axisIndex, float radius, HandleSpace space, bool includeBackFacing = false)
         {
             Vector3 normal = GetAxisDirection(target, axisIndex, space);
-            return GetDistanceToCircle(mousePos, target.position, normal, radius);
+            return GetDistanceToCircle(mousePos, target.position, normal, radius, includeBackFacing);
         }
 
-        private float GetDistanceToCircle(Vector2 mousePos, Vector3 center, Vector3 normal, float radius)
+        private float GetDistanceToCircle(Vector2 mousePos, Vector3 center, Vector3 normal, float radius, bool includeBackFacing = false)
         {
             // Create tangent vectors for the circle
             Vector3 tangent1 = GetPerpendicularVector(normal);
@@ -145,16 +150,16 @@ namespace MeshFreeHandles
                 float angle = i / (float)CIRCLE_SEGMENTS * Mathf.PI * 2f;
                 Vector3 direction = tangent1 * Mathf.Cos(angle) + tangent2 * Mathf.Sin(angle);
 
-                // Only check front-facing segments
-                if (Vector3.Dot(direction, camForward) < 0f)
+                // Only check front-facing segments unless the whole circle is interactive
+                if (!includeBackFacing && Vector3.Dot(direction, camForward) >= 0f)
+                    continue;
+
+                Vector3 worldPoint = center + direction * radius;
+                if (!IsPointBehindCamera(worldPoint))
                 {
-                    Vector3 worldPoint = center + direction * radius;
-                    if (!IsPointBehindCamera(worldPoint))
-                    {
-                        Vector3 screenPoint = mainCamera.WorldToScreenPoint(worldPoint);
-                        float dist = Vector2.Distance(mousePos, new Vector2(screenPoint.x, screenPoint.y));
-                        minDist = Mathf.Min(minDist, dist);
-                    }
+                    Vector3 screenPoint = mainCamera.WorldToScreenPoint(worldPoint);
+                    float dist = Vector2.Distance(mousePos, new Vector2(screenPoint.x, screenPoint.y));
+                    minDist = Mathf.Min(minDist, dist);
                 }
             }
 

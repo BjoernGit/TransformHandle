@@ -31,6 +31,19 @@ namespace MeshFreeHandles
         [SerializeField] private bool showRotationGlobalX = false;
         [SerializeField] private bool showRotationGlobalY = true;
         [SerializeField] private bool showRotationGlobalZ = false;
+        [SerializeField] private bool showFreeRotation = false;      // Roll ring facing the camera
+        [SerializeField] private bool showTrackballRotation = false; // Free drag area inside the ring
+
+        [Tooltip("Draws rotation circles as complete ellipses instead of hiding the half that faces away " +
+                 "from the camera. The hidden half also becomes interactive. Useful when only a single " +
+                 "rotation axis is enabled.")]
+        [SerializeField] private bool showFullRotationCircles = false;
+
+        /// <summary>
+        /// When enabled, rotation circles are drawn and hit-tested in full,
+        /// including the part facing away from the camera.
+        /// </summary>
+        public bool ShowFullRotationCircles => showFullRotationCircles;
 
         [Header("Scale Handles")]
         [SerializeField] private bool showScaleLocalX = true;
@@ -76,6 +89,10 @@ namespace MeshFreeHandles
                     break;
 
                 case HandleType.Rotation:
+                    // Roll ring and trackball are camera-space operations and therefore space-agnostic
+                    if (axis == 3) return showFreeRotation;
+                    if (axis == 7) return showTrackballRotation;
+
                     if (space == HandleSpace.Local)
                     {
                         switch (axis)
@@ -137,7 +154,8 @@ namespace MeshFreeHandles
 
                 case HandleType.Rotation:
                     return showRotationLocalX || showRotationLocalY || showRotationLocalZ ||
-                           showRotationGlobalX || showRotationGlobalY || showRotationGlobalZ;
+                           showRotationGlobalX || showRotationGlobalY || showRotationGlobalZ ||
+                           showFreeRotation || showTrackballRotation;
 
                 case HandleType.Scale:
                     return showScaleLocalX || showScaleLocalY || showScaleLocalZ ||

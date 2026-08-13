@@ -84,7 +84,8 @@ namespace MeshFreeHandles
                     if (profile.IsAxisEnabled(HandleType.Rotation, axis, space))
                     {
                         Vector3 normal = TranslationHandleUtils.GetAxisDirection(target, axis, space);
-                        CollectRotationCircle(position, normal, color, scale, axis, hoveredAxis, camera);
+                        CollectRotationCircle(position, normal, color, scale, axis, hoveredAxis, camera,
+                                              profile.ShowFullRotationCircles);
                     }
                 }
             }
@@ -102,7 +103,7 @@ namespace MeshFreeHandles
         }
 
         private void CollectRotationCircle(Vector3 center, Vector3 normal, Color color, float radius,
-                                         int axisIndex, int hoveredAxis, Camera camera)
+                                         int axisIndex, int hoveredAxis, Camera camera, bool drawFullCircle = false)
         {
             if (camera == null) return; //no cam protection
 
@@ -132,15 +133,20 @@ namespace MeshFreeHandles
                 Vector3 pA = center + (tangent1 * Mathf.Cos(angleA) + tangent2 * Mathf.Sin(angleA)) * radius;
                 Vector3 pB = center + (tangent1 * Mathf.Cos(angleB) + tangent2 * Mathf.Sin(angleB)) * radius;
 
-                // Visibility check
-                Vector3 mid = (pA + pB) * 0.5f;
-                float dotMid = Vector3.Dot((mid - center).normalized, toCamera);
-                if (dotMid < -0.1f)
-                    continue;
+                // Visibility check - skipped when the full circle is requested
+                Color segmentColor = baseColor;
 
-                // Fade based on angle to camera
-                float fade = Mathf.Clamp01((dotMid + 0.1f) / 0.2f);
-                Color segmentColor = new Color(baseColor.r, baseColor.g, baseColor.b, baseColor.a * fade);
+                if (!drawFullCircle)
+                {
+                    Vector3 mid = (pA + pB) * 0.5f;
+                    float dotMid = Vector3.Dot((mid - center).normalized, toCamera);
+                    if (dotMid < -0.1f)
+                        continue;
+
+                    // Fade based on angle to camera
+                    float fade = Mathf.Clamp01((dotMid + 0.1f) / 0.2f);
+                    segmentColor = new Color(baseColor.r, baseColor.g, baseColor.b, baseColor.a * fade);
+                }
                 
                 // Add to batch
                 batcher.AddThickLine(pA, pB, segmentColor, thickness);
