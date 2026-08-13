@@ -42,17 +42,21 @@ namespace MeshFreeHandles
         {
             hoveredSpace = HandleSpace.Local;
 
-            // 1. Uniform center: prioritized if close enough
-            float centerSize = handleScale * CENTER_HANDLE_MULTIPLIER;
-            float centerDist = GetDistanceToCenterHandle(mousePos, target.position, centerSize);
+            // 1. Uniform center: prioritized if close enough, but only when enabled in the profile
+            bool uniformLocalEnabled = profile.IsAxisEnabled(HandleType.Scale, 3, HandleSpace.Local);
+            bool uniformGlobalEnabled = profile.IsAxisEnabled(HandleType.Scale, 3, HandleSpace.Global);
 
-            if (centerDist < CENTER_THRESHOLD)
+            if (uniformLocalEnabled || uniformGlobalEnabled)
             {
-                // Uniform scale is space-agnostic; report an enabled space
-                hoveredSpace = profile.IsAxisEnabled(HandleType.Scale, 3, HandleSpace.Local)
-                    ? HandleSpace.Local
-                    : HandleSpace.Global;
-                return 3;
+                float centerSize = handleScale * CENTER_HANDLE_MULTIPLIER;
+                float centerDist = GetDistanceToCenterHandle(mousePos, target.position, centerSize);
+
+                if (centerDist < CENTER_THRESHOLD)
+                {
+                    // Uniform scale is space-agnostic; report an enabled space
+                    hoveredSpace = uniformLocalEnabled ? HandleSpace.Local : HandleSpace.Global;
+                    return 3;
+                }
             }
 
             // 2. Linear axes with profile check

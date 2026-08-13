@@ -6,6 +6,9 @@ The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.
 and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
+### Fixed
+- Uniform scale centre could be hovered and dragged even when disabled in the handle profile
+
 ### Removed
 - Grey axis cross at the centre of the translation handle: it was always drawn along the world axes and therefore ignored both the handle space and the target's rotation
 
